@@ -1,24 +1,33 @@
+"use client";
+
 import { getUsers } from "@/app/actions";
 import Link from "next/link";
 import { Eye, User, Plus } from "lucide-react";
+import { useLanguage } from "@/providers/LanguageProvider";
+import { useEffect, useState } from "react";
 
-export default async function AdminUsers() {
-  const users = await getUsers();
+export default function AdminUsers() {
+  const [users, setUsers] = useState<any[]>([]);
+  const { dict } = useLanguage();
+
+  useEffect(() => {
+    getUsers().then(setUsers);
+  }, []);
 
   return (
     <div className="p-10 max-w-7xl mx-auto animate-entry">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Пользователи</h1>
+        <h1 className="text-3xl font-bold">{dict.common.users}</h1>
         <div className="flex items-center gap-4">
           <div className="text-sm text-textMuted bg-surface px-3 py-1 rounded-full border border-border">
-            Всего: {users.length}
+            {dict.common.total}: {users.length}
           </div>
           <Link
             href="/admin/users/create"
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primaryHover transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Добавить
+            {dict.common.add}
           </Link>
         </div>
       </div>
@@ -28,18 +37,18 @@ export default async function AdminUsers() {
           <thead className="bg-white/5 border-b border-white/5 backdrop-blur-md">
             <tr>
               <th className="p-4 font-medium text-textMuted">ID</th>
-              <th className="p-4 font-medium text-textMuted">Имя</th>
+              <th className="p-4 font-medium text-textMuted">{dict.common.name}</th>
               <th className="p-4 font-medium text-textMuted">Email</th>
-              <th className="p-4 font-medium text-textMuted">Релизы</th>
-              <th className="p-4 font-medium text-textMuted">Дата регистрации</th>
-              <th className="p-4 font-medium text-textMuted">Действия</th>
+              <th className="p-4 font-medium text-textMuted">{dict.common.releases}</th>
+              <th className="p-4 font-medium text-textMuted">{dict.common.registered}</th>
+              <th className="p-4 font-medium text-textMuted">{dict.common.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {users.length === 0 ? (
               <tr>
                 <td colSpan={6} className="p-10 text-center text-textMuted">
-                  Нет пользователей
+                  {dict.common.noUsers}
                 </td>
               </tr>
             ) : (
@@ -68,7 +77,7 @@ export default async function AdminUsers() {
                       className="inline-flex items-center justify-center rounded-xl bg-white/5 hover:bg-primary hover:text-white px-4 py-2 text-sm font-medium transition-all transform hover:scale-105 active:scale-95"
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      Профиль
+                      {dict.common.profile}
                     </Link>
                   </td>
                 </tr>

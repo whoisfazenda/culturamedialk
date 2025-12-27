@@ -3,7 +3,7 @@ import DashboardContent from "./DashboardContent";
 
 export default async function Home() {
   const [news, releases, user] = await Promise.all([
-    getNews(),
+    getNews(3), // Only fetch 3 news for dashboard
     getArtistReleases(),
     getCurrentUser()
   ]);

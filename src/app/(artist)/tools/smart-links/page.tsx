@@ -1,19 +1,28 @@
+"use client";
+
 import { getArtistReleases } from "@/app/actions";
 import Link from "next/link";
 import { Disc, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { useLanguage } from "@/providers/LanguageProvider";
+import { useEffect, useState } from "react";
 
-export default async function SmartLinksList() {
-  const releases = await getArtistReleases();
+export default function SmartLinksList() {
+  const [releases, setReleases] = useState<any[]>([]);
+  const { dict } = useLanguage();
+
+  useEffect(() => {
+    getArtistReleases().then(setReleases);
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Смарт-ссылки</h1>
-      <p className="text-textMuted mb-8">Выберите релиз, чтобы создать или отредактировать смарт-ссылку.</p>
+      <h1 className="text-3xl font-bold mb-8">{dict.common.smartLinks}</h1>
+      <p className="text-textMuted mb-8">{dict.common.selectReleaseForSmartLink}</p>
 
       {releases.length === 0 ? (
         <div className="text-center py-20 text-textMuted bg-surface rounded-2xl border border-border">
           <Disc className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>У вас пока нет релизов</p>
+          <p>{dict.common.noReleases}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

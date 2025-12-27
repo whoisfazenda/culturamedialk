@@ -4,10 +4,12 @@ import { getAllArtistRequests, updateArtistRequestStatus } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
 import { CheckCircle, Clock, XCircle, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function AdminRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { dict } = useLanguage();
 
   useEffect(() => {
     loadRequests();
@@ -24,16 +26,16 @@ export default function AdminRequestsPage() {
     loadRequests();
   };
 
-  if (loading) return <div className="p-10 text-center text-textMuted">Загрузка...</div>;
+  if (loading) return <div className="p-10 text-center text-textMuted">{dict.common.loading}</div>;
 
   return (
     <div className="p-10 max-w-7xl mx-auto animate-entry">
-      <h1 className="text-3xl font-bold mb-8 text-textMain">Запросы на изменение карточки</h1>
+      <h1 className="text-3xl font-bold mb-8 text-textMain">{dict.common.artistCardRequests}</h1>
 
       <div className="glass rounded-3xl border border-border overflow-hidden">
         <div className="divide-y divide-border">
           {requests.length === 0 ? (
-            <div className="p-10 text-center text-textMuted">Нет активных запросов</div>
+            <div className="p-10 text-center text-textMuted">{dict.common.noRequests}</div>
           ) : (
             requests.map((req) => (
               <div key={req.id} className="p-6 hover:bg-surfaceHover transition-colors">
@@ -61,21 +63,21 @@ export default function AdminRequestsPage() {
                   
                   {req.status === 'PENDING' && (
                     <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="bg-success text-white hover:bg-success/80"
                         onClick={() => handleStatusUpdate(req.id, 'DONE')}
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Выполнить
+                        {dict.common.complete}
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         className="bg-error text-white hover:bg-error/80"
                         onClick={() => handleStatusUpdate(req.id, 'REJECTED')}
                       >
                         <XCircle className="w-4 h-4 mr-2" />
-                        Отклонить
+                        {dict.common.reject}
                       </Button>
                     </div>
                   )}
@@ -88,17 +90,17 @@ export default function AdminRequestsPage() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   {req.platform && (
                     <div className="px-3 py-1 bg-surfaceHover rounded-lg border border-border text-textMuted">
-                      Площадка: <span className="text-textMain font-medium">{req.platform}</span>
+                      {dict.common.platform}: <span className="text-textMain font-medium">{req.platform}</span>
                     </div>
                   )}
                   {req.artistCardLink && (
                     <a href={req.artistCardLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline">
-                      <ExternalLink className="w-4 h-4" /> Карточка артиста
+                      <ExternalLink className="w-4 h-4" /> {dict.common.artistCard}
                     </a>
                   )}
                   {req.attachmentUrl && (
                     <a href={req.attachmentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline">
-                      <ExternalLink className="w-4 h-4" /> Вложение
+                      <ExternalLink className="w-4 h-4" /> {dict.common.attachment}
                     </a>
                   )}
                 </div>

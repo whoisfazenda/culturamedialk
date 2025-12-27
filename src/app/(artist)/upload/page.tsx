@@ -48,6 +48,7 @@ const releaseSchema = z.object({
     composer: z.string().min(1),
     lyricist: z.string().optional(),
     instrumental: z.boolean().default(false),
+    ffp: z.boolean().default(false),
     explicit: z.boolean().default(false),
     fileData: z.string().optional(), // Base64 string for audio
     fileName: z.string().optional(),
@@ -107,7 +108,7 @@ export default function UploadPage() {
       type: "SINGLE",
       instrumental: false,
       promoRequest: false,
-      tracks: [{ title: "", version: "", composer: "", instrumental: false, explicit: false }],
+      tracks: [{ title: "", version: "", composer: "", instrumental: false, ffp: false, explicit: false }],
       releaseDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     },
   });
@@ -134,18 +135,7 @@ export default function UploadPage() {
     }
 
     try {
-      // 50MB Limit Check
-      const safeData = {
-        ...data,
-        tracks: data.tracks.map(t => ({
-          ...t,
-          fileData: (t.fileData && t.fileData.length > 50000000) 
-            ? "data:text/plain;base64,RmlsZSB0b28gbGFyZ2UgZm9yIHByb3RvdHlwZSBzdG9yYWdl"
-            : t.fileData
-        }))
-      };
-
-      const result = await createRelease(safeData);
+      const result = await createRelease(data);
       if (result.success) {
         alert("Релиз успешно отправлен на модерацию!");
         router.push("/releases");
@@ -153,8 +143,8 @@ export default function UploadPage() {
         alert("Ошибка при отправке: " + result.error);
       }
     } catch (e) {
-      console.error(e);
-      alert("Произошла ошибка при отправке");
+      console.error("Upload error:", e);
+      alert("Произошла ошибка при отправке. Возможно, файл слишком большой или возникла проблема с сетью.");
     }
   };
 
@@ -347,7 +337,7 @@ export default function UploadPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => append({ title: "", version: "", composer: "", instrumental: false, explicit: false })}
+                onClick={() => append({ title: "", version: "", composer: "", instrumental: false, ffp: false, explicit: false })}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {dict.upload.addTrack}

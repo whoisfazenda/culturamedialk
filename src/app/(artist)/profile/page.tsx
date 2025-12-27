@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { User, Lock, Camera, Mail, Save } from "lucide-react";
 import { getCurrentUser, updateProfile, changePassword } from "@/app/actions";
+import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'general' | 'security'>('general');
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { dict } = useLanguage();
 
   // Profile Form
   const [name, setName] = useState("");
@@ -50,47 +52,47 @@ export default function ProfilePage() {
     e.preventDefault();
     const res = await updateProfile({ name, bio, avatarData: avatarData || undefined });
     if (res.success) {
-      alert("Профиль обновлен!");
+      alert(dict.common.profileUpdated);
     } else {
-      alert("Ошибка обновления");
+      alert(dict.common.updateError);
     }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      alert("Пароли не совпадают");
+      alert(dict.common.passwordsDoNotMatch);
       return;
     }
     const res = await changePassword({ currentPassword, newPassword });
     if (res.success) {
-      alert("Пароль изменен!");
+      alert(dict.common.passwordChanged);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } else {
-      alert("Ошибка: " + res.error);
+      alert(dict.common.error + ": " + res.error);
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Загрузка...</div>;
+  if (loading) return <div className="p-10 text-center">{dict.common.loading}</div>;
 
   return (
     <div className="max-w-4xl mx-auto animate-entry">
-      <h1 className="text-3xl font-bold mb-8">Настройки профиля</h1>
+      <h1 className="text-3xl font-bold mb-8">{dict.common.profileSettings}</h1>
 
       <div className="flex gap-6 mb-8 border-b border-border">
         <button
           onClick={() => setActiveTab('general')}
           className={`pb-4 px-2 font-medium transition-colors ${activeTab === 'general' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
         >
-          Основное
+          {dict.common.general}
         </button>
         <button
           onClick={() => setActiveTab('security')}
           className={`pb-4 px-2 font-medium transition-colors ${activeTab === 'security' ? 'text-primary border-b-2 border-primary' : 'text-textMuted hover:text-textMain'}`}
         >
-          Безопасность
+          {dict.common.security}
         </button>
       </div>
 
@@ -130,18 +132,18 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-textMuted">Имя / Никнейм</label>
+                <label className="text-sm font-medium text-textMuted">{dict.common.nameNickname}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 w-5 h-5 text-textMuted" />
-                  <Input 
-                    className="pl-10" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
+                  <Input
+                    className="pl-10"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-textMuted">Email</label>
+                <label className="text-sm font-medium text-textMuted">{dict.common.email}</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 w-5 h-5 text-textMuted" />
                   <Input
@@ -154,10 +156,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-textMuted">О себе</label>
+              <label className="text-sm font-medium text-textMuted">{dict.common.aboutSelf}</label>
               <textarea
                 className="w-full min-h-[120px] rounded-lg border border-border bg-surfaceHover px-3 py-2 text-sm text-textMain focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-textMuted"
-                placeholder="Расскажите о своем творчестве..."
+                placeholder={dict.common.aboutProfilePlaceholder}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
               />
@@ -166,7 +168,7 @@ export default function ProfilePage() {
             <div className="flex justify-end">
               <Button type="submit">
                 <Save className="mr-2 h-4 w-4" />
-                Сохранить изменения
+                {dict.common.saveChanges}
               </Button>
             </div>
           </form>
@@ -177,26 +179,26 @@ export default function ProfilePage() {
         <div className="bg-surface p-8 rounded-2xl border border-border animate-in fade-in slide-in-from-top-2 max-w-2xl">
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
             <Lock className="w-5 h-5 text-primary" />
-            Смена пароля
+            {dict.common.changePassword}
           </h2>
           <form onSubmit={handlePasswordChange} className="space-y-6">
-            <Input 
+            <Input
               type="password"
-              label="Текущий пароль"
+              label={dict.common.currentPassword}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
             />
-            <Input 
+            <Input
               type="password"
-              label="Новый пароль"
+              label={dict.common.newPassword}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-            <Input 
+            <Input
               type="password"
-              label="Подтвердите новый пароль"
+              label={dict.common.confirmPassword}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -204,7 +206,7 @@ export default function ProfilePage() {
 
             <div className="flex justify-end">
               <Button type="submit" variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                Обновить пароль
+                {dict.common.updatePassword}
               </Button>
             </div>
           </form>

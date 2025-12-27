@@ -1,10 +1,10 @@
 "use client";
 
-import { createNews, getNews } from "@/app/actions";
+import { createNews, getNews, deleteNews } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useState, useEffect } from "react";
-import { Plus, Newspaper, Image as ImageIcon } from "lucide-react";
+import { Plus, Newspaper, Image as ImageIcon, Trash2 } from "lucide-react";
 
 export default function AdminNewsPage() {
   const [news, setNews] = useState<any[]>([]);
@@ -33,6 +33,16 @@ export default function AdminNewsPage() {
       const reader = new FileReader();
       reader.onload = (ev) => setFormData({ ...formData, image: ev.target?.result as string });
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Вы уверены, что хотите удалить эту новость?")) return;
+    const res = await deleteNews(id);
+    if (res.success) {
+      getNews().then(setNews);
+    } else {
+      alert("Ошибка при удалении: " + res.error);
     }
   };
 
@@ -99,7 +109,16 @@ export default function AdminNewsPage() {
                 {new Date(item.createdAt).toLocaleDateString()}
               </div>
               <h3 className="text-xl font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors">{item.title}</h3>
-              <p className="text-textMuted text-sm line-clamp-3 leading-relaxed">{item.content}</p>
+              <p className="text-textMuted text-sm line-clamp-3 leading-relaxed mb-4">{item.content}</p>
+              <div className="flex justify-end pt-4 border-t border-white/5">
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="text-error hover:text-red-400 p-2 hover:bg-error/10 rounded-lg transition-all"
+                  title="Удалить новость"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </article>
         ))}

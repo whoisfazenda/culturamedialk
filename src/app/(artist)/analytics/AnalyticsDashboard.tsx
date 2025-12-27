@@ -3,10 +3,12 @@
 import { useState, useMemo } from "react";
 import { Users, Music, PieChart, Globe, Smartphone, BarChart3, Lock } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function AnalyticsDashboard({ reports, user }: { reports: any[], user: any }) {
   const [selectedQuarter, setSelectedQuarter] = useState("all");
   const isPremium = user?.tariff === 'PREMIUM';
+  const { dict } = useLanguage();
 
   const currentData = useMemo(() => {
     if (selectedQuarter === "all") {
@@ -40,7 +42,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
       });
       
       return {
-        quarter: "За все время",
+        quarter: dict.common.allTime,
         totalStreams,
         uniqueListeners,
         trackStats: Array.from(trackMap.values()),
@@ -85,15 +87,15 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
   return (
     <div className="max-w-6xl mx-auto pb-20 animate-entry">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Аналитика</h1>
+        <h1 className="text-3xl font-bold">{dict.common.analytics}</h1>
         
         {reports.length > 0 && (
-          <select 
+          <select
             className="h-10 rounded-xl border border-border bg-surfaceHover px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
             value={selectedQuarter}
             onChange={(e) => setSelectedQuarter(e.target.value)}
           >
-            <option value="all">За все время</option>
+            <option value="all">{dict.common.allTime}</option>
             {reports.map(r => (
               <option key={r.id} value={r.quarter}>{r.quarter}</option>
             ))}
@@ -104,7 +106,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
       {!currentData ? (
         <div className="p-20 text-center text-textMuted bg-surface rounded-3xl border border-border">
           <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Нет данных за выбранный период</p>
+          <p>{dict.common.noDataPeriod}</p>
         </div>
       ) : (
         <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
@@ -115,7 +117,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                 <Music className="w-8 h-8" />
               </div>
               <div>
-                <div className="text-sm text-textMuted mb-1">Всего прослушиваний</div>
+                <div className="text-sm text-textMuted mb-1">{dict.common.totalStreams}</div>
                 <div className="text-3xl font-bold">{currentData.totalStreams.toLocaleString()}</div>
               </div>
             </div>
@@ -125,7 +127,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                 <Users className="w-8 h-8" />
               </div>
               <div>
-                <div className="text-sm text-textMuted mb-1">Уникальные слушатели</div>
+                <div className="text-sm text-textMuted mb-1">{dict.common.uniqueListeners}</div>
                 <div className="text-3xl font-bold">{currentData.uniqueListeners.toLocaleString()}</div>
               </div>
             </div>
@@ -136,7 +138,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
             {/* Platforms */}
             <div className="bg-surface p-6 rounded-3xl border border-border">
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-primary" /> Площадки
+                <Smartphone className="w-5 h-5 text-primary" /> {dict.common.platforms}
               </h3>
               <div className="space-y-4">
                 {getChartData(currentData.platformStats).map((item) => (
@@ -153,23 +155,23 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                     </div>
                   </div>
                 ))}
-                {Object.keys(currentData.platformStats).length === 0 && <div className="text-textMuted text-sm">Нет данных</div>}
+                {Object.keys(currentData.platformStats).length === 0 && <div className="text-textMuted text-sm">{dict.common.noData}</div>}
               </div>
             </div>
 
             {/* Countries */}
             <div className="bg-surface p-6 rounded-3xl border border-border relative overflow-hidden">
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-primary" /> Страны
+                <Globe className="w-5 h-5 text-primary" /> {dict.common.countries}
               </h3>
               
               {!isPremium ? (
                 <div className="absolute inset-0 bg-surface/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-10">
                   <Lock className="w-8 h-8 text-primary mb-2" />
-                  <h4 className="font-bold text-lg mb-1">Доступно в Premium</h4>
-                  <p className="text-sm text-textMuted mb-4">Аналитика по странам доступна только на тарифе Премиум.</p>
+                  <h4 className="font-bold text-lg mb-1">{dict.common.availableInPremium}</h4>
+                  <p className="text-sm text-textMuted mb-4">{dict.common.countryAnalyticsPremium}</p>
                   <Link href="/tariffs" className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-primaryHover transition-colors">
-                    Узнать о тарифах
+                    {dict.common.learnTariffs}
                   </Link>
                 </div>
               ) : (
@@ -188,7 +190,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                       </div>
                     </div>
                   ))}
-                  {Object.keys(currentData.countryStats).length === 0 && <div className="text-textMuted text-sm">Нет данных</div>}
+                  {Object.keys(currentData.countryStats).length === 0 && <div className="text-textMuted text-sm">{dict.common.noData}</div>}
                 </div>
               )}
             </div>
@@ -197,7 +199,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
           {/* Tracks Chart */}
           <div className="bg-surface p-8 rounded-3xl border border-border">
             <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
-              <PieChart className="w-6 h-6 text-primary" /> Распределение по трекам
+              <PieChart className="w-6 h-6 text-primary" /> {dict.common.tracksDistribution}
             </h3>
             
             {currentData.trackStats.length > 0 ? (
@@ -239,7 +241,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                 </div>
               </div>
             ) : (
-              <div className="text-center text-textMuted">Нет данных по трекам</div>
+              <div className="text-center text-textMuted">{dict.common.noTrackData}</div>
             )}
           </div>
         </div>

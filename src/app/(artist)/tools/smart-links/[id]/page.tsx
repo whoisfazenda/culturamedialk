@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Globe, ExternalLink, RefreshCw, Copy, Check, Search } 
 import { SpotifyIcon, AppleMusicIcon, VkMusicIcon, YandexMusicIcon, YouTubeMusicIcon } from "@/components/icons/PlatformIcons";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function SmartLinkEditor({ params }: { params: { id: string } }) {
   const [release, setRelease] = useState<any>(null);
@@ -17,6 +18,7 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
   const [isSearching, setIsSearching] = useState(false);
   const [generatedSlug, setGeneratedSlug] = useState("");
   const [copied, setCopied] = useState(false);
+  const { dict } = useLanguage();
 
   const defaultLinks = {
     "Spotify": "", "Apple Music": "", "Yandex Music": "", "VK Music": "", "YouTube Music": ""
@@ -53,13 +55,13 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
         if (results.youtubeMusic) newLinks["YouTube Music"] = results.youtubeMusic.url;
         
         setLinks(newLinks);
-        alert("Ссылки найдены!");
+        alert(dict.common.linksFound);
       } else {
-        alert("Релиз не найден. Попробуйте ввести ссылки вручную.");
+        alert(dict.common.releaseNotFound);
       }
     } catch (error) {
       console.error("Search error:", error);
-      alert("Ошибка при поиске ссылок");
+      alert(dict.common.searchError);
     } finally {
       setIsSearching(false);
     }
@@ -69,9 +71,9 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
     const res = await updateSmartLink(params.id, links);
     if (res.success) {
       setGeneratedSlug(res.slug!);
-      alert("Смарт-ссылка обновлена!");
+      alert(dict.common.linkUpdated);
     } else {
-      alert("Ошибка сохранения");
+      alert(dict.common.saveError);
     }
   };
 
@@ -81,14 +83,14 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) return <div className="p-10 text-center">Загрузка...</div>;
-  if (!release) return <div className="p-10 text-center">Релиз не найден</div>;
+  if (loading) return <div className="p-10 text-center">{dict.common.loading}</div>;
+  if (!release) return <div className="p-10 text-center">{dict.common.releaseNotFound}</div>;
 
   return (
     <div className="max-w-4xl mx-auto pb-20 animate-entry">
       <Link href="/tools/smart-links" className="inline-flex items-center text-textMuted hover:text-white mb-6">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Назад к списку
+        {dict.common.backToList}
       </Link>
 
       <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
@@ -99,7 +101,7 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
           )}
         </div>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Редактор смарт-ссылки</h1>
+          <h1 className="text-3xl font-bold mb-2">{dict.common.smartLinkEditor}</h1>
           <p className="text-xl text-textMuted">{release.title} - {release.mainArtist}</p>
           
           {generatedSlug && (
@@ -118,14 +120,14 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
 
       <div className="glass p-8 rounded-3xl border border-border">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">Ссылки на площадки</h2>
+          <h2 className="text-xl font-bold">{dict.common.platformLinks}</h2>
           <Button variant="outline" onClick={handleAutoSearch} disabled={isSearching} className="border-primary/50 text-primary hover:bg-primary/10">
             {isSearching ? (
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
             ) : (
               <Search className="w-4 h-4 mr-2" />
             )}
-            {isSearching ? 'Поиск...' : 'Авто-поиск'}
+            {isSearching ? dict.common.search : dict.common.autoSearch}
           </Button>
         </div>
 
@@ -150,7 +152,7 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
                 </div>
                 <div className="relative">
                   <Input
-                    placeholder={`Ссылка на ${platform}`}
+                    placeholder={`${dict.common.linkPlaceholder} ${platform}`}
                     value={links[platform]}
                     onChange={(e) => setLinks({...links, [platform]: e.target.value})}
                     className="pr-10"
@@ -173,7 +175,7 @@ export default function SmartLinkEditor({ params }: { params: { id: string } }) 
         <div className="flex justify-end mt-8 pt-6 border-t border-border/50">
           <Button onClick={handleSave} size="lg">
             <Save className="w-4 h-4 mr-2" />
-            Сохранить и создать
+            {dict.common.saveAndCreate}
           </Button>
         </div>
       </div>

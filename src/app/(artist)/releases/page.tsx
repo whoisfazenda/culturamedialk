@@ -1,23 +1,32 @@
+"use client";
+
 import { getArtistReleases } from "@/app/actions";
 import Link from "next/link";
 import { Calendar, Disc } from "lucide-react";
+import { useLanguage } from "@/providers/LanguageProvider";
+import { useEffect, useState } from "react";
 
-export default async function MyReleases() {
-  const releases = await getArtistReleases();
+export default function MyReleases() {
+  const [releases, setReleases] = useState<any[]>([]);
+  const { dict } = useLanguage();
+
+  useEffect(() => {
+    getArtistReleases().then(setReleases);
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Мои релизы</h1>
+        <h1 className="text-3xl font-bold">{dict.common.myReleases}</h1>
         <Link href="/upload" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primaryHover transition-colors">
-          + Новый релиз
+          + {dict.common.newRelease}
         </Link>
       </div>
 
       {releases.length === 0 ? (
         <div className="text-center py-20 text-textMuted bg-surface rounded-3xl border border-border animate-entry">
           <Disc className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>У вас пока нет релизов</p>
+          <p>{dict.common.noReleases}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -43,7 +52,7 @@ export default async function MyReleases() {
                     release.status === 'REJECTED' ? 'bg-red-500 text-white' :
                     'bg-yellow-500 text-black'
                   }`}>
-                    {release.status === 'APPROVED' ? 'Одобрен' : release.status === 'REJECTED' ? 'Отклонен' : 'На проверке'}
+                    {release.status === 'APPROVED' ? dict.common.approved : release.status === 'REJECTED' ? dict.common.rejected : dict.common.pending}
                   </span>
                 </div>
               </div>

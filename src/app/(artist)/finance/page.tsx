@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useState, useEffect } from "react";
 import { Wallet, Download, ExternalLink, History, ArrowUpRight } from "lucide-react";
+import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function FinancePage() {
   const [user, setUser] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
+  const { dict } = useLanguage();
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -39,12 +41,12 @@ export default function FinancePage() {
     
     // Minimum amount check
     if (parseFloat(amount) < 2000) {
-      alert("Минимальная сумма вывода — 2000 ₽");
+      alert(dict.common.minWithdrawAmount);
       return;
     }
 
     if (parseFloat(amount) > (user?.balance || 0)) {
-      alert("Недостаточно средств");
+      alert(dict.common.insufficientFunds);
       return;
     }
 
@@ -52,7 +54,7 @@ export default function FinancePage() {
     let finalDetails = details;
     if (method === 'sbp') {
       if (!bankName) {
-        alert("Укажите банк получателя");
+        alert(dict.common.specifyBank);
         return;
       }
       finalDetails = `${details} (${bankName})`;
@@ -65,32 +67,32 @@ export default function FinancePage() {
     });
 
     if (res.success) {
-      alert("Заявка на вывод создана!");
+      alert(dict.common.withdrawRequestCreated);
       setIsWithdrawOpen(false);
       setAmount("");
       setDetails("");
       setBankName("");
       fetchData();
     } else {
-      alert("Ошибка: " + res.error);
+      alert(dict.common.error + ": " + res.error);
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Загрузка...</div>;
+  if (loading) return <div className="p-10 text-center">{dict.common.loading}</div>;
 
   return (
     <div className="max-w-6xl mx-auto pb-20 animate-entry">
-      <h1 className="text-3xl font-bold mb-8">Финансы и отчеты</h1>
+      <h1 className="text-3xl font-bold mb-8">{dict.common.financeAndReports}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         {/* Balance Card */}
         <div className="bg-surface p-8 rounded-2xl border border-border flex flex-col justify-between">
           <div>
-            <div className="text-textMuted mb-2">Доступная сумма</div>
+            <div className="text-textMuted mb-2">{dict.common.availableAmount}</div>
             <div className="text-4xl font-bold mb-4">{(user?.balance || 0).toLocaleString()} ₽</div>
           </div>
           <Button onClick={() => setIsWithdrawOpen(true)} className="w-fit">
-            Вывод средств
+            {dict.common.withdraw}
           </Button>
         </div>
 
@@ -98,16 +100,16 @@ export default function FinancePage() {
         <div className="bg-surface p-8 rounded-2xl border border-border">
           <div className="flex items-center gap-2 mb-4">
             <History className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-lg">История операций</h3>
+            <h3 className="font-bold text-lg">{dict.common.transactionHistory}</h3>
           </div>
           <div className="space-y-4 max-h-[200px] overflow-y-auto">
             {payouts.length === 0 ? (
-              <p className="text-textMuted text-sm">История пуста</p>
+              <p className="text-textMuted text-sm">{dict.common.historyEmpty}</p>
             ) : (
               payouts.map(p => (
                 <div key={p.id} className="flex justify-between text-sm border-b border-border/50 pb-2">
                   <div>
-                    <div className="font-medium">Вывод средств ({p.method === 'card' ? 'Карта' : p.method === 'sbp' ? 'СБП' : 'ЮMoney'})</div>
+                    <div className="font-medium">{dict.common.withdraw} ({p.method === 'card' ? dict.common.card : p.method === 'sbp' ? dict.common.sbp : dict.common.wallet})</div>
                     <div className="text-xs text-textMuted">{new Date(p.createdAt).toLocaleDateString()}</div>
                   </div>
                   <div className="text-right">
@@ -123,10 +125,10 @@ export default function FinancePage() {
 
       {/* Reports List */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold">Отчеты</h2>
+        <h2 className="text-2xl font-bold">{dict.common.reports}</h2>
         {reports.length === 0 ? (
           <div className="text-center py-10 text-textMuted bg-surface rounded-2xl border border-border">
-            Нет доступных отчетов
+            {dict.common.noReports}
           </div>
         ) : (
           reports.map((report) => (
@@ -139,22 +141,22 @@ export default function FinancePage() {
                 <div className="font-bold text-xl">{report.amount.toLocaleString()} ₽</div>
                 <div className="flex gap-2">
                   {report.fileUrl && (
-                    <a 
-                      href={report.fileUrl} 
-                      download 
+                    <a
+                      href={report.fileUrl}
+                      download
                       className="p-2 rounded-lg bg-surfaceHover hover:bg-primary hover:text-white transition-colors"
-                      title="Скачать отчет"
+                      title={dict.common.downloadReport}
                     >
                       <Download className="w-5 h-5" />
                     </a>
                   )}
                   {report.linkUrl && (
-                    <a 
-                      href={report.linkUrl} 
-                      target="_blank" 
+                    <a
+                      href={report.linkUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-lg bg-surfaceHover hover:bg-primary hover:text-white transition-colors"
-                      title="Открыть ссылку"
+                      title={dict.common.openLink}
                     >
                       <ExternalLink className="w-5 h-5" />
                     </a>
@@ -170,7 +172,7 @@ export default function FinancePage() {
       {isWithdrawOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-surface rounded-2xl border border-border p-6 shadow-2xl animate-in zoom-in-95">
-            <h3 className="text-xl font-bold mb-6">Вывод средств</h3>
+            <h3 className="text-xl font-bold mb-6">{dict.common.withdraw}</h3>
             
             <form onSubmit={handleWithdraw} className="space-y-6">
               <div className="grid grid-cols-3 gap-2">
@@ -180,47 +182,47 @@ export default function FinancePage() {
                     type="button"
                     onClick={() => { setMethod(m); setDetails(""); setBankName(""); }}
                     className={`p-3 rounded-xl border text-sm font-medium transition-all ${
-                      method === m 
-                        ? 'border-primary bg-primary/10 text-primary' 
+                      method === m
+                        ? 'border-primary bg-primary/10 text-primary'
                         : 'border-border bg-surfaceHover text-textMuted hover:border-primary/50'
                     }`}
                   >
-                    {m === 'card' ? 'Карта' : m === 'sbp' ? 'СБП' : 'ЮMoney'}
+                    {m === 'card' ? dict.common.card : m === 'sbp' ? dict.common.sbp : dict.common.wallet}
                   </button>
                 ))}
               </div>
 
               <div className="space-y-4">
-                <Input 
-                  placeholder={method === 'card' ? 'Номер карты' : method === 'sbp' ? 'Номер телефона' : 'Номер кошелька'}
+                <Input
+                  placeholder={method === 'card' ? dict.common.cardNumber : method === 'sbp' ? dict.common.phoneNumber : dict.common.walletNumber}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   required
                 />
                 {method === 'sbp' && (
-                  <Input 
-                    placeholder="Банк получателя (Сбер, Тинькофф...)" 
+                  <Input
+                    placeholder={dict.common.recipientBank}
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     required
                   />
                 )}
-                <Input 
+                <Input
                   type="number"
-                  placeholder="Сумма вывода"
+                  placeholder={dict.common.withdrawAmount}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                 />
                 <div className="flex justify-between text-xs text-textMuted">
-                  <span>Мин. сумма: 2000 ₽</span>
-                  <span>Доступно: {user?.balance} ₽</span>
+                  <span>{dict.common.minAmount}</span>
+                  <span>{dict.common.available}: {user?.balance} ₽</span>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setIsWithdrawOpen(false)}>Отмена</Button>
-                <Button type="submit">Отправить запрос</Button>
+                <Button type="button" variant="ghost" onClick={() => setIsWithdrawOpen(false)}>{dict.common.cancel}</Button>
+                <Button type="submit">{dict.common.sendRequest}</Button>
               </div>
             </form>
           </div>

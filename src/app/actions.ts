@@ -5,10 +5,32 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { statfs } from "fs/promises";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { statfs, writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
+import {
+  sendWelcomeEmail,
+  sendPasswordChangedEmail,
+  sendReleaseStatusEmail,
+  sendPayoutStatusEmail,
+  sendAnalyticsReadyEmail,
+  sendRequestStatusEmail
+} from "@/lib/mail";
 
-const prisma = new PrismaClient();
+// Prisma Singleton logic inside actions.ts to avoid build resolution issues
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
+
+declare global {
+  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+// @ts-ignore
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+
+// @ts-ignore
+if (process.env.NODE_ENV !== "production") globalThis.prismaGlobal = prisma;
 
 export async function checkServerStorage() {
   try {
@@ -241,12 +263,27 @@ export async function updateProfile(formData: z.infer<typeof profileSchema>) {
   if (!result.success) return { success: false, error: "Validation failed" };
 
   try {
+    const data = result.data;
+    let avatarUrl = data.avatarData;
+
+    // Save avatar to disk if it's base64
+    if (data.avatarData && data.avatarData.startsWith("data:image")) {
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
+      await mkdir(uploadDir, { recursive: true });
+      
+      const base64Data = data.avatarData.split(",")[1];
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${userId}-${randomUUID()}.jpg`;
+      await writeFile(path.join(uploadDir, fileName), buffer);
+      avatarUrl = `/uploads/avatars/${fileName}`;
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: {
-        name: result.data.name,
-        bio: result.data.bio,
-        avatarUrl: result.data.avatarData
+        name: data.name,
+        bio: data.bio,
+        avatarUrl: avatarUrl
       }
     });
     revalidatePath("/profile");
@@ -273,6 +310,13 @@ export async function changePassword(formData: z.infer<typeof passwordSchema>) {
       where: { id: userId },
       data: { password: result.data.newPassword }
     });
+
+    // Send Email notification
+    try {
+      await sendPasswordChangedEmail(user.email, user.name);
+    } catch (emailError) {
+      console.error("Failed to send password change email:", emailError);
+    }
     
     return { success: true };
   } catch (error) {
@@ -289,12 +333,63 @@ export async function createRelease(formData: z.infer<typeof releaseSchema>) {
   const result = releaseSchema.safeParse(formData);
 
   if (!result.success) {
-    return { success: false, error: "Validation failed" };
+    console.error("Validation failed:", result.error.format());
+    return { success: false, error: "Validation failed: " + JSON.stringify(result.error.format()) };
   }
 
   const data = result.data;
 
   try {
+    // 1. Create Upload Directories
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    const coversDir = path.join(uploadDir, "covers");
+    const audioDir = path.join(uploadDir, "audio");
+    
+    await mkdir(coversDir, { recursive: true });
+    await mkdir(audioDir, { recursive: true });
+
+    // 2. Save Cover Image
+    let coverUrl = "";
+    if (data.coverData && data.coverData.startsWith("data:image")) {
+      const base64Data = data.coverData.split(",")[1];
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${randomUUID()}.jpg`;
+      const filePath = path.join(coversDir, fileName);
+      await writeFile(filePath, buffer);
+      coverUrl = `/uploads/covers/${fileName}`;
+    }
+
+    // 3. Process Tracks and Save Audio Files
+    const tracksWithUrls = await Promise.all(data.tracks.map(async (track, index) => {
+      let fileUrl = "";
+      if (track.fileData && track.fileData.startsWith("data:audio")) {
+        const base64Data = track.fileData.split(",")[1];
+        const buffer = Buffer.from(base64Data, "base64");
+        const fileName = `${randomUUID()}.wav`;
+        const filePath = path.join(audioDir, fileName);
+        await writeFile(filePath, buffer);
+        fileUrl = `/uploads/audio/${fileName}`;
+      } else if (track.fileData && track.fileData.startsWith("http")) {
+        // If it's already a link (e.g. storage full fallback)
+        fileUrl = track.fileData;
+      }
+
+      return {
+        position: index + 1,
+        title: track.title,
+        version: track.version,
+        mainArtist: track.mainArtist,
+        featArtists: track.featArtists,
+        composer: track.composer,
+        lyricist: track.lyricist,
+        instrumental: track.instrumental,
+        ffp: track.ffp || false,
+        explicit: track.explicit || false,
+        fileUrl: fileUrl,
+      };
+    }));
+
+    // 4. Save to Database
     const release = await prisma.release.create({
       data: {
         title: data.title,
@@ -311,22 +406,10 @@ export async function createRelease(formData: z.infer<typeof releaseSchema>) {
         promoReleaseInfo: data.promoReleaseInfo,
         promoArtistInfo: data.promoArtistInfo,
         promoMarketingInfo: data.promoMarketingInfo,
-        coverUrl: data.coverData, 
+        coverUrl: coverUrl,
         artistId: userId,
         tracks: {
-          create: data.tracks.map((track, index) => ({
-            position: index + 1,
-            title: track.title,
-            version: track.version,
-            mainArtist: track.mainArtist,
-            featArtists: track.featArtists,
-            composer: track.composer,
-            lyricist: track.lyricist,
-            instrumental: track.instrumental,
-            ffp: track.ffp || false,
-            explicit: track.explicit || false,
-            fileUrl: track.fileData,
-          })),
+          create: tracksWithUrls,
         },
       },
     });
@@ -347,6 +430,16 @@ export async function getArtistReleases() {
   try {
     return await prisma.release.findMany({
       where: { artistId: userId },
+      select: {
+        id: true,
+        title: true,
+        mainArtist: true,
+        status: true,
+        releaseDate: true,
+        coverUrl: true,
+        createdAt: true,
+        // tracks are excluded here because they contain large fileData
+      },
       orderBy: { createdAt: 'desc' }
     });
   } catch (error) {
@@ -360,7 +453,17 @@ export async function getArtistReleases() {
 export async function getPendingReleases() {
   try {
     const releases = await prisma.release.findMany({
-      include: { artist: true },
+      select: {
+        id: true,
+        title: true,
+        mainArtist: true,
+        status: true,
+        type: true,
+        releaseDate: true,
+        coverUrl: true,
+        createdAt: true,
+        artist: true
+      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -413,14 +516,26 @@ export async function updateReleaseStatus(id: string, status: string, upc?: stri
         `Ваш релиз "${release.title}" был успешно одобрен!`, 
         `/releases/${release.id}`
       );
+      // Email Notification
+      try {
+        await sendReleaseStatusEmail(release.artist.email, release.artist.name, release.title, 'APPROVED', upc, undefined, release.id);
+      } catch (emailError) {
+        console.error("Failed to send release approved email:", emailError);
+      }
     } else if (status === 'REJECTED') {
       await createNotification(
-        release.artistId, 
-        'RELEASE_REJECTED', 
-        'Релиз отклонен', 
-        `Ваш релиз "${release.title}" был отклонен. Причина: ${rejectionReason}`, 
+        release.artistId,
+        'RELEASE_REJECTED',
+        'Релиз отклонен',
+        `Ваш релиз "${release.title}" был отклонен. Причина: ${rejectionReason}`,
         `/releases/${release.id}`
       );
+      // Email Notification
+      try {
+        await sendReleaseStatusEmail(release.artist.email, release.artist.name, release.title, 'REJECTED', undefined, rejectionReason, release.id);
+      } catch (emailError) {
+        console.error("Failed to send release rejected email:", emailError);
+      }
     }
 
     revalidatePath("/admin/dashboard");
@@ -501,8 +616,26 @@ export async function createNews(formData: z.infer<typeof newsSchema>) {
   if (!result.success) return { success: false, error: "Validation failed" };
 
   try {
+    const data = result.data;
+    let imageUrl = data.image;
+
+    // Save news image to disk if it's base64
+    if (data.image && data.image.startsWith("data:image")) {
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "news");
+      await mkdir(uploadDir, { recursive: true });
+      
+      const base64Data = data.image.split(",")[1];
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${randomUUID()}.jpg`;
+      await writeFile(path.join(uploadDir, fileName), buffer);
+      imageUrl = `/uploads/news/${fileName}`;
+    }
+
     await prisma.news.create({
-      data: result.data
+      data: {
+        ...data,
+        image: imageUrl
+      }
     });
     
     // Broadcast Notification
@@ -522,10 +655,32 @@ export async function createNews(formData: z.infer<typeof newsSchema>) {
   }
 }
 
-export async function getNews() {
+export async function deleteNews(id: string) {
+  const userId = cookies().get("user_id")?.value;
+  if (!userId) return { success: false, error: "Unauthorized" };
+
+  // Check if admin
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (currentUser?.role !== 'ADMIN') return { success: false, error: "Forbidden" };
+
+  try {
+    await prisma.news.delete({
+      where: { id }
+    });
+    revalidatePath("/");
+    revalidatePath("/admin/news");
+    return { success: true };
+  } catch (error) {
+    console.error("Delete news error:", error);
+    return { success: false, error: "Failed to delete news" };
+  }
+}
+
+export async function getNews(limit?: number) {
   try {
     return await prisma.news.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: limit
     });
   } catch (error) {
     console.error("Get news error:", error);
@@ -573,6 +728,16 @@ export async function createAnalytics(formData: z.infer<typeof analyticsSchema>)
       `Статистика за ${result.data.quarter} уже доступна!`,
       '/analytics'
     );
+
+    // Email Notification
+    const artist = await prisma.user.findUnique({ where: { id: result.data.artistId } });
+    if (artist) {
+      try {
+        await sendAnalyticsReadyEmail(artist.email, artist.name, result.data.quarter);
+      } catch (emailError) {
+        console.error("Failed to send analytics email:", emailError);
+      }
+    }
 
     revalidatePath("/analytics");
     return { success: true };
@@ -818,6 +983,16 @@ export async function approvePayout(id: string) {
         `Ваш запрос на вывод ${request.amount} ₽ успешно обработан.`,
         '/finance'
       );
+
+      // Email Notification
+      const user = await prisma.user.findUnique({ where: { id: request.userId } });
+      if (user) {
+        try {
+          await sendPayoutStatusEmail(user.email, user.name, request.amount, 'PAID');
+        } catch (emailError) {
+          console.error("Failed to send payout email:", emailError);
+        }
+      }
     }
 
     revalidatePath("/admin/finance");
@@ -966,6 +1141,12 @@ export async function updateArtistRequestStatus(id: string, status: string) {
         `Ваш запрос "${request.type}" был успешно выполнен!`,
         '/tools/artist-card'
       );
+      // Email Notification
+      try {
+        await sendRequestStatusEmail(request.user.email, request.user.name, request.type, 'DONE');
+      } catch (emailError) {
+        console.error("Failed to send request done email:", emailError);
+      }
     } else if (status === 'REJECTED') {
       await createNotification(
         request.userId,
@@ -974,6 +1155,12 @@ export async function updateArtistRequestStatus(id: string, status: string) {
         `Ваш запрос "${request.type}" был отклонен.`,
         '/tools/artist-card'
       );
+      // Email Notification
+      try {
+        await sendRequestStatusEmail(request.user.email, request.user.name, request.type, 'REJECTED');
+      } catch (emailError) {
+        console.error("Failed to send request rejected email:", emailError);
+      }
     }
 
     revalidatePath("/admin/requests");
