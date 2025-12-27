@@ -40,7 +40,15 @@ export default function MyReleases() {
               <div className="aspect-square bg-surfaceHover relative">
                 {release.coverUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={release.coverUrl} alt={release.title} className="w-full h-full object-cover" />
+                  <img
+                    src={release.coverUrl}
+                    alt={release.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error("Image load error:", release.coverUrl);
+                      e.currentTarget.src = "https://via.placeholder.com/300?text=No+Cover";
+                    }}
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-textMuted">
                     <Disc className="w-10 h-10" />
