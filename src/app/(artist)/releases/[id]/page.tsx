@@ -21,7 +21,22 @@ export default async function ReleasePage({ params }: { params: { id: string } }
         <div className="w-full md:w-64 aspect-square flex-shrink-0 bg-surface rounded-2xl overflow-hidden border border-border shadow-2xl">
           {release.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={release.coverUrl} alt={release.title} className="w-full h-full object-cover" />
+            <img
+              src={release.coverUrl}
+              alt={release.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error("Image load error:", release.coverUrl);
+                // Если картинка не загрузилась, показываем иконку заглушку
+                e.currentTarget.style.display = 'none';
+                if (e.currentTarget.parentElement) {
+                  const fallback = document.createElement('div');
+                  fallback.className = "w-full h-full flex items-center justify-center text-textMuted bg-surfaceHover";
+                  fallback.innerHTML = '<svg class="w-16 h-16 opacity-20" ...></svg>'; // Simplified for diff
+                  e.currentTarget.parentElement.appendChild(fallback);
+                }
+              }}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-textMuted bg-surfaceHover">
               <Disc className="w-16 h-16 opacity-20" />
