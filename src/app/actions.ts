@@ -482,16 +482,26 @@ export async function getPendingReleases() {
 
 export async function getReleaseById(id: string) {
   try {
-    return await prisma.release.findUnique({
+    console.log("Fetching release by ID:", id);
+    const release = await prisma.release.findUnique({
       where: { id },
-      include: { 
+      include: {
         artist: true,
-        tracks: { orderBy: { position: 'asc' } } 
+        tracks: { orderBy: { position: 'asc' } }
       }
     });
+    
+    if (!release) {
+      console.log("Release not found for ID:", id);
+      return null;
+    }
+
+    return release;
   } catch (error) {
-    console.error("Get release error:", error);
-    return null;
+    console.error("CRITICAL ERROR in getReleaseById:", error);
+    // Throwing error here will trigger the Next.js error boundary/server-side exception page
+    // allowing us to see the error in PM2 logs
+    throw error;
   }
 }
 
