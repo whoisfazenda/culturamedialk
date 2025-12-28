@@ -9,6 +9,11 @@ const montserrat = Montserrat({ subsets: ['latin', 'cyrillic'], variable: '--fon
 export const metadata: Metadata = {
   title: 'Личный кабинет артиста | Cultura Media',
   description: 'Платформа для дистрибуции музыки',
+  icons: {
+    icon: '/logo.png', // Используем ваш логотип как иконку
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
