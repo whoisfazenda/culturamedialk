@@ -6,16 +6,18 @@ const PRIMARY_COLOR = "#7c3aed";
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: false, // Для 587 всегда false
-  requireTLS: true, // Принудительно используем TLS
+  secure: Number(process.env.SMTP_PORT) === 465,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
   tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    minVersion: "TLSv1.2"
   },
+  connectionTimeout: 20000, // Увеличиваем до 20 сек
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
   debug: true,
   logger: true
 });
