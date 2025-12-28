@@ -5,6 +5,28 @@ import { Users, Music, PieChart, Globe, Smartphone, BarChart3, Lock } from "luci
 import Link from "next/link";
 import { useLanguage } from "@/providers/LanguageProvider";
 
+const COUNTRY_NAMES: Record<string, string> = {
+  "Russia": "Россия",
+  "USA": "США",
+  "Kazakhstan": "Казахстан",
+  "Belarus": "Беларусь",
+  "Ukraine": "Украина",
+  "Germany": "Германия",
+  "France": "Франция",
+  "UK": "Великобритания",
+  "United Kingdom": "Великобритания",
+};
+
+const PLATFORM_COLORS: Record<string, string> = {
+  "Spotify": "#1DB954",
+  "Apple Music": "#FA243C",
+  "VK Music": "#0077FF",
+  "Yandex Music": "#FFCC00",
+  "YouTube Music": "#FF0000",
+  "Deezer": "#A238FF",
+  "Tidal": "#000000",
+};
+
 export default function AnalyticsDashboard({ reports, user }: { reports: any[], user: any }) {
   const [selectedQuarter, setSelectedQuarter] = useState("all");
   const isPremium = user?.tariff === 'PREMIUM';
@@ -61,15 +83,19 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
     };
   }, [selectedQuarter, reports]);
 
-  const getChartData = (data: Record<string, number>) => {
+  const getChartData = (data: Record<string, number>, type: 'platform' | 'country') => {
     const total = Object.values(data).reduce((a, b) => a + b, 0);
+    const countryColors = ["#6200ea", "#03dac6", "#ffab00", "#ff4081", "#00e5ff", "#76ff03", "#d500f9"];
+
     return Object.entries(data)
       .sort(([, a], [, b]) => b - a)
       .map(([key, value], index) => ({
-        key,
+        key: type === 'country' ? (COUNTRY_NAMES[key] || key) : key,
         value,
         percentage: total > 0 ? (value / total) * 100 : 0,
-        color: ["#6200ea", "#7c4dff", "#b388ff", "#03dac6", "#018786", "#cf6679", "#b00020"][index % 7]
+        color: type === 'platform'
+          ? (PLATFORM_COLORS[key] || "#7c3aed")
+          : countryColors[index % countryColors.length]
       }));
   };
 
@@ -141,7 +167,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                 <Smartphone className="w-5 h-5 text-primary" /> {dict.common.platforms}
               </h3>
               <div className="space-y-4">
-                {getChartData(currentData.platformStats).map((item) => (
+                {getChartData(currentData.platformStats, 'platform').map((item) => (
                   <div key={item.key} className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span>{item.key}</span>
@@ -176,7 +202,7 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {getChartData(currentData.countryStats).map((item) => (
+                  {getChartData(currentData.countryStats, 'country').map((item) => (
                     <div key={item.key} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{item.key}</span>
