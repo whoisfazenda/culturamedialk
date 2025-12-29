@@ -55,12 +55,10 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 rounded-2xl border border-border bg-surface p-10 shadow-2xl">
         <div className="text-center">
-          <div className="mx-auto flex items-center justify-center mb-6">
+          <div className="mx-auto flex items-center justify-center mb-6 px-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" className="h-16 w-auto object-contain" />
+            <img src="/logo.png" alt="Logo" className="h-48 w-auto object-contain" />
           </div>
-          <h2 className="text-3xl font-bold text-white">Cultura Media</h2>
-          <p className="mt-2 text-sm text-textMuted">Вход в личный кабинет артиста</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
