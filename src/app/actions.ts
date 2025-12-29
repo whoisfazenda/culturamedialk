@@ -14,7 +14,8 @@ import {
   sendReleaseStatusEmail,
   sendPayoutStatusEmail,
   sendAnalyticsReadyEmail,
-  sendRequestStatusEmail
+  sendRequestStatusEmail,
+  sendPasswordResetEmail
 } from "@/lib/mail";
 
 // Prisma Singleton logic inside actions.ts to avoid build resolution issues
@@ -234,6 +235,11 @@ export async function loginUser(formData: z.infer<typeof authSchema>) {
 
     if (user && user.password === result.data.password) {
       cookies().set("user_id", user.id, { httpOnly: true, path: "/" });
+      
+      if (user.forcePasswordChange) {
+        return { success: true, forcePasswordChange: true };
+      }
+      
       return { success: true };
     }
     return { success: false, error: "Invalid credentials" };
@@ -308,7 +314,10 @@ export async function changePassword(formData: z.infer<typeof passwordSchema>) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { password: result.data.newPassword }
+      data: {
+        password: result.data.newPassword,
+        forcePasswordChange: false
+      }
     });
 
     // Send Email notification
@@ -321,6 +330,31 @@ export async function changePassword(formData: z.infer<typeof passwordSchema>) {
     return { success: true };
   } catch (error) {
     return { success: false, error: "Password update failed" };
+  }
+}
+
+export async function resetPassword(email: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return { success: false, error: "Пользователь не найден" };
+
+    // Generate temp password (8 chars)
+    const tempPassword = Math.random().toString(36).slice(-8);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: tempPassword,
+        forcePasswordChange: true
+      }
+    });
+
+    await sendPasswordResetEmail(user.email, user.name, tempPassword);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return { success: false, error: "Ошибка при восстановлении пароля" };
   }
 }
 
