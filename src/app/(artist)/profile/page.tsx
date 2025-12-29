@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { User, Lock, Camera, Mail, Save } from "lucide-react";
+import { User, Lock, Camera, Mail, Save, AlertCircle } from "lucide-react";
 import { getCurrentUser, updateProfile, changePassword } from "@/app/actions";
 import { useLanguage } from "@/providers/LanguageProvider";
 
 export default function ProfilePage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'general' | 'security'>('general');
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,11 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'security') {
+      setActiveTab('security');
+    }
+
     getCurrentUser().then(u => {
       if (u) {
         setUser(u);
@@ -34,7 +41,7 @@ export default function ProfilePage() {
       }
       setLoading(false);
     });
-  }, []);
+  }, [searchParams]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -181,6 +188,17 @@ export default function ProfilePage() {
             <Lock className="w-5 h-5 text-primary" />
             {dict.common.changePassword}
           </h2>
+
+          {user?.forcePasswordChange && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-500 font-bold">Обязательная смена пароля</p>
+                <p className="text-red-500/80 text-sm">Вы вошли с временным паролем. Пожалуйста, установите новый постоянный пароль для защиты вашего аккаунта.</p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handlePasswordChange} className="space-y-6">
             <Input
               type="password"
