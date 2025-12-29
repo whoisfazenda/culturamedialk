@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Music, X } from "lucide-react";
 import Link from "next/link";
 import { loginUser, resetPassword } from "@/app/actions";
+import { useTheme } from "@/providers/ThemeProvider";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { theme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +59,11 @@ export default function Login() {
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center mb-6 px-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" className="h-48 w-auto object-contain" />
+            <img
+              src={theme === 'dark' ? "/logo-black.png" : "/logo.png"}
+              alt="Logo"
+              className="h-48 w-auto object-contain"
+            />
           </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
