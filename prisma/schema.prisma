@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -19,6 +19,7 @@ model User {
   tariff    String    @default("BASIC") // BASIC, PREMIUM
   tariffPeriod String @default("MONTHLY") // MONTHLY, YEARLY
   balance   Float     @default(0)
+  forcePasswordChange Boolean @default(false)
   releases  Release[]
   analytics AnalyticsReport[]
   notifications Notification[]
