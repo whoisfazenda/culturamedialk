@@ -29,7 +29,7 @@ export default function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
       <div className="flex h-32 items-center justify-center border-b border-border px-4 flex-shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={theme === 'dark' ? "/logo-black.png" : "/logo.png"}
+          src={theme === 'dark' ? "/logo.png" : "/logo-black.png"}
           alt="Logo"
           className="h-auto w-full max-h-28 object-contain"
           onError={(e) => {
