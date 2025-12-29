@@ -62,7 +62,7 @@ export default function Login() {
             <img
               src={theme === 'dark' ? "/logo.png" : "/logo-black.png"}
               alt="Logo"
-              className="h-48 w-auto object-contain"
+              className="h-64 w-auto object-contain"
             />
           </div>
         </div>
