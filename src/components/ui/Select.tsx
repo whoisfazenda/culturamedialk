@@ -91,8 +91,14 @@ export function Select({ options, value, onChange, placeholder, className }: Sel
 
       {isOpen && mounted && createPortal(
         <div
-          className="select-portal fixed z-[9999] bg-background border border-border rounded-xl shadow-2xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
-          style={{ top: position.top, left: position.left, width: position.width }}
+          className="select-portal fixed z-[9999] border border-border rounded-xl shadow-2xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+          style={{
+            top: position.top,
+            left: position.left,
+            width: position.width,
+            backgroundColor: '#0a0a0a', // Принудительно черный фон
+            color: '#ffffff'            // Принудительно белый текст
+          }}
         >
           {normalizedOptions.map((option) => (
             <button
@@ -104,8 +110,9 @@ export function Select({ options, value, onChange, placeholder, className }: Sel
                 setIsOpen(false);
               }}
               className={`w-full text-left px-4 py-3 text-base hover:bg-primary/20 hover:text-primary transition-colors ${
-                value === option.value ? "text-primary bg-primary/10 font-medium" : "text-textMuted"
+                value === option.value ? "text-primary bg-primary/10 font-medium" : ""
               }`}
+              style={{ color: value === option.value ? undefined : '#ffffff' }}
             >
               {option.label}
             </button>
