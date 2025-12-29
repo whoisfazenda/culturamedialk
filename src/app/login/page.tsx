@@ -60,7 +60,7 @@ export default function Login() {
           <div className="mx-auto flex items-center justify-center mb-6 px-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={theme === 'dark' ? "/logo-black.png" : "/logo.png"}
+              src={theme === 'dark' ? "/logo.png" : "/logo-black.png"}
               alt="Logo"
               className="h-48 w-auto object-contain"
             />
