@@ -18,17 +18,26 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import { useTheme } from '@/providers/ThemeProvider';
+
 export default function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
   const { dict } = useLanguage();
+  const { theme } = useTheme();
 
   return (
     <aside className="h-full w-full border-r border-border bg-surface backdrop-blur-xl flex flex-col">
       <div className="flex h-32 items-center justify-center border-b border-border px-4 flex-shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="Logo" className="h-auto w-full max-h-28 object-contain" onError={(e) => {
-          e.currentTarget.style.display = 'none';
-          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-        }} />
+        <img
+          src={theme === 'dark' ? "/logo-black.png" : "/logo.png"}
+          alt="Logo"
+          className="h-auto w-full max-h-28 object-contain"
+          onError={(e) => {
+            console.error("Sidebar logo error:", e.currentTarget.src);
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
+        />
         <div className="hidden flex items-center">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-lg shadow-primary/20">
             <Music className="h-5 w-5 text-white" />
