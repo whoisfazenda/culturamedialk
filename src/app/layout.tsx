@@ -10,9 +10,12 @@ export const metadata: Metadata = {
   title: 'Личный кабинет артиста | Cultura Media',
   description: 'Платформа для дистрибуции музыки',
   icons: {
-    icon: '/logo.png', // Используем ваш логотип как иконку
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: [
+      { url: '/favicon-dark.png', media: '(prefers-color-scheme: dark)' },
+      { url: '/favicon-light.png', media: '(prefers-color-scheme: light)' },
+    ],
+    shortcut: '/favicon-dark.png',
+    apple: '/favicon-dark.png',
   },
 };
 
