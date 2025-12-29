@@ -211,3 +211,36 @@ export async function sendRequestStatusEmail(to: string, name: string, requestTy
     return { success: false, error };
   }
 }
+
+export async function sendPasswordResetEmail(to: string, name: string, tempPassword: string) {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject: 'Временный пароль - Cultura Media',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="${LOGO_URL}" alt="Cultura Media" style="max-width: 200px; height: auto;">
+          </div>
+          <h2>Привет, ${name}!</h2>
+          <p>Вы запросили восстановление пароля в личном кабинете Cultura Media.</p>
+          <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px;">Ваш временный пароль:</p>
+            <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px; margin: 0; color: #7c3aed; text-align: center;">${tempPassword}</p>
+          </div>
+          <p><strong>Внимание:</strong> После входа в систему вам необходимо будет сразу сменить этот пароль на свой собственный.</p>
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://test.culturamedia.ru/login" style="background: ${PRIMARY_COLOR}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Войти и сменить пароль</a>
+          </div>
+          <p style="margin-top: 30px; font-size: 12px; color: #999; text-align: center;">Если вы не запрашивали восстановление пароля, проигнорируйте это письмо.</p>
+        </div>
+      `,
+    });
+    console.log("Password reset email sent:", info.messageId);
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    return { success: false, error };
+  }
+}
