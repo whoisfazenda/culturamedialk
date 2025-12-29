@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Users, Music, PieChart, Globe, Smartphone, BarChart3, Lock } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/providers/LanguageProvider";
+import { Select } from "@/components/ui/Select";
 
 const COUNTRY_NAMES: Record<string, string> = {
   "Russia": "Россия",
@@ -116,16 +117,16 @@ export default function AnalyticsDashboard({ reports, user }: { reports: any[], 
         <h1 className="text-3xl font-bold">{dict.common.analytics}</h1>
         
         {reports.length > 0 && (
-          <select
-            className="h-10 rounded-xl border border-border bg-surfaceHover px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
-            value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(e.target.value)}
-          >
-            <option value="all">{dict.common.allTime}</option>
-            {reports.map(r => (
-              <option key={r.id} value={r.quarter}>{r.quarter}</option>
-            ))}
-          </select>
+          <div className="w-48">
+            <Select
+              options={[
+                { value: "all", label: dict.common.allTime },
+                ...reports.map(r => ({ value: r.quarter, label: r.quarter }))
+              ]}
+              value={selectedQuarter}
+              onChange={(val) => setSelectedQuarter(val)}
+            />
+          </div>
         )}
       </div>
 
