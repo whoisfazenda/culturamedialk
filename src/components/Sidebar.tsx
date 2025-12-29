@@ -26,12 +26,12 @@ export default function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
 
   return (
     <aside className="h-full w-full border-r border-border bg-surface backdrop-blur-xl flex flex-col">
-      <div className="flex h-32 items-center justify-center border-b border-border px-4 flex-shrink-0">
+      <div className="flex h-40 items-center justify-center border-b border-border px-4 flex-shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={theme === 'dark' ? "/logo.png" : "/logo-black.png"}
           alt="Logo"
-          className="h-auto w-full max-h-28 object-contain"
+          className="h-auto w-full max-h-36 object-contain scale-110"
           onError={(e) => {
             console.error("Sidebar logo error:", e.currentTarget.src);
             e.currentTarget.style.display = 'none';
